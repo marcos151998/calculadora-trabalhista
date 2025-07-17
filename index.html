@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Trabalhista | Marcos Paulo</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007bff">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .hero {
+      background: linear-gradient(90deg, #004aad, #007bff);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .hero h1 {
+      font-size: 30px;
+      margin: 0 0 10px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.06);
+    }
+    label {
+      font-weight: 500;
+      margin-top: 10px;
+      display: block;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #exportarPDF {
+      background: #28a745;
+    }
+    #exportarPDF:hover {
+      background: #1e7e34;
+    }
+    #resetarForm {
+      background: #dc3545;
+    }
+    #resetarForm:hover {
+      background: #a71d2a;
+    }
+    #resultado {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f1f3f5;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      height: auto;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 13px;
+      color: #666;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1><i class="fas fa-scale-balanced"></i> Calculadora Trabalhista para Advogados</h1>
+  </div>
+
+  <div class="container">
+    <form id="formulario">
+      <label for="salario">Salário Base (R$):</label>
+      <input type="text" id="salario" required oninput="formatarMoeda(this)">
+
+      <label for="admissao">Data de Admissão:</label>
+      <input type="date" id="admissao" required max="9999-12-31">
+
+      <label for="demissao">Data de Demissão:</label>
+      <input type="date" id="demissao" required max="9999-12-31">
+
+      <label for="rescisao">Tipo de Rescisão:</label>
+      <select id="rescisao" required onchange="atualizarFGTS()">
+        <option value="dispensa">Dispensa sem Justa Causa</option>
+        <option value="pedido">Pedido de Demissão</option>
+        <option value="justa">Dispensa por Justa Causa</option>
+      </select>
+
+      <label for="temFeriasProporcionais">Tem Férias Proporcionais?</label>
+      <select id="temFeriasProporcionais">
+        <option value="sim">Sim</option>
+        <option value="nao">Não</option>
+      </select>
+
+      <label for="feriasVencidas">Tem Férias Vencidas?</label>
+      <select id="feriasVencidas" onchange="toggleFeriasDetalhes()">
+        <option value="nao">Não</option>
+        <option value="sim">Sim</option>
+      </select>
+
+      <div id="feriasDetalhes" class="hidden">
+        <label for="anosFerias">Anos de Férias Vencidas:</label>
+        <input type="number" id="anosFerias" min="0">
+
+        <label for="mesesFerias">Meses de Férias Vencidas:</label>
+        <input type="number" id="mesesFerias" min="0">
+      </div>
+
+      <label for="recebeuDecimo">Você já recebeu 13º anteriormente?</label>
+      <select id="recebeuDecimo" onchange="toggleAnosDecimo()">
+        <option value="sim">Sim</option>
+        <option value="nao">Não</option>
+      </select>
+
+      <div id="decimoDetalhes" class="hidden">
+        <label for="anosSemDecimo">Quantos anos nunca recebeu 13º?</label>
+        <input type="number" id="anosSemDecimo" min="0" value="0">
+
+        <label for="mesesSemDecimo">Quantos meses nunca recebeu 13º?</label>
+        <input type="number" id="mesesSemDecimo" min="0" value="0">
+      </div>
+
+      <label for="aviso">Aviso Prévio:</label>
+      <select id="aviso">
+        <option value="trabalhado">Trabalhado</option>
+        <option value="indenizado">Indenizado</option>
+        <option value="nao">Não Cumprido</option>
+      </select>
+
+      <label for="fgtsRecebido">Recebe FGTS?</label>
+      <select id="fgtsRecebido">
+        <option value="sim">Sim</option>
+        <option value="nao">Não</option>
+      </select>
+
+      <label for="resultado">Resumo dos Cálculos:</label>
+      <textarea id="resultado" rows="12" readonly></textarea>
+
+      <button onclick="preencherResumo(); return false"><i class="fas fa-calculator"></i> Gerar Resumo</button>
+      <button id="exportarPDF" onclick="gerarPDF(); return false"><i class="fas fa-file-pdf"></i> Exportar Resultado em PDF</button>
+      <button id="resetarForm" onclick="resetarFormulario(); return false"><i class="fas fa-rotate-left"></i> Limpar Dados</button>
+    </form>
+  </div>
+
+  <footer>
+    © 2025 - Marcos Paulo | Todos os direitos reservados.
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const { jsPDF } = window.jspdf;
+
+    function formatarMoeda(campo) {
+      let valor = campo.value.replace(/\D/g, "");
+      valor = (parseInt(valor, 10) / 100).toFixed(2) + "";
+      valor = valor.replace(".", ",");
+      valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+      campo.value = valor;
+    }
+
+    function toggleFeriasDetalhes() {
+      const select = document.getElementById("feriasVencidas");
+      const detalhes = document.getElementById("feriasDetalhes");
+      detalhes.classList.toggle("hidden", select.value !== "sim");
+    }
+
+    function toggleAnosDecimo() {
+      const select = document.getElementById("recebeuDecimo");
+      const detalhes = document.getElementById("decimoDetalhes");
+      detalhes.classList.toggle("hidden", select.value !== "nao");
+    }
+
+    function atualizarFGTS() {
+      const tipo = document.getElementById("rescisao").value;
+      const fgts = document.getElementById("fgtsRecebido");
+      fgts.disabled = (tipo === "pedido" || tipo === "justa");
+      if (fgts.disabled) {
+        fgts.value = "nao";
+      }
+    }
+
+    function calcularMeses(dataInicio, dataFim) {
+      const inicio = new Date(dataInicio);
+      const fim = new Date(dataFim);
+      let meses = (fim.getFullYear() - inicio.getFullYear()) * 12 + (fim.getMonth() - inicio.getMonth());
+      if (fim.getDate() >= 15) meses++;
+      return meses <= 0 ? 0 : meses;
+    }
+
+    function formatarValor(valor) {
+      return valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function preencherResumo() {
+      const salario = parseFloat(document.getElementById("salario").value.replace(/\./g, '').replace(',', '.')) || 0;
+      const admissao = document.getElementById("admissao").value;
+      const demissao = document.getElementById("demissao").value;
+      const rescisao = document.getElementById("rescisao").value;
+      const temFeriasProporcionais = document.getElementById("temFeriasProporcionais").value;
+      const feriasVencidas = document.getElementById("feriasVencidas").value;
+      const anos = parseInt(document.getElementById("anosFerias").value) || 0;
+      const meses = parseInt(document.getElementById("mesesFerias").value) || 0;
+      const aviso = document.getElementById("aviso").value;
+      const fgtsRecebido = document.getElementById("fgtsRecebido").value;
+      const recebeuDecimo = document.getElementById("recebeuDecimo").value;
+      const anosSemDecimo = parseInt(document.getElementById("anosSemDecimo").value) || 0;
+      const mesesSemDecimo = parseInt(document.getElementById("mesesSemDecimo").value) || 0;
+
+      if (new Date(admissao) >= new Date(demissao)) {
+        alert("A data de admissão deve ser anterior à data de demissão.");
+        return;
+      }
+
+      const feriasV = (anos * salario) + (meses * (salario / 12));
+      const adicionalV = feriasV * 0.33;
+
+      let feriasP = 0;
+      let adicionalP = 0;
+      const mesesTrabalhados = calcularMeses(admissao, demissao);
+      const mesesUltimoAno = mesesTrabalhados % 12;
+
+      if (temFeriasProporcionais === "sim") {
+        feriasP = (salario / 12) * mesesUltimoAno;
+        adicionalP = feriasP * 0.33;
+      }
+
+      let decimoTotal = 0;
+      if (recebeuDecimo === "sim") {
+        decimoTotal = (salario / 12) * mesesUltimoAno;
+      } else {
+        decimoTotal = (salario * anosSemDecimo) + ((salario / 12) * mesesSemDecimo) + ((salario / 12) * mesesUltimoAno);
+      }
+      const adicional13 = decimoTotal * 0.33;
+
+      const avisoPrevio = (aviso === "trabalhado" || aviso === "indenizado") ? salario : 0;
+      const diasTrabalhados = new Date(demissao).getDate();
+      const saldoSalario = (salario / 30) * diasTrabalhados;
+
+      let fgts = 0;
+      let multaFgts = 0;
+      if (fgtsRecebido === "sim" && rescisao === "dispensa") {
+        fgts = 0.08 * (feriasV + adicionalV + feriasP + adicionalP + decimoTotal + adicional13 + avisoPrevio + saldoSalario);
+        multaFgts = fgts * 0.4;
+      }
+
+      const total = feriasV + adicionalV + feriasP + adicionalP + decimoTotal + adicional13 + avisoPrevio + saldoSalario + fgts + multaFgts;
+
+      let texto = "Resumo dos Cálculos:\n";
+      texto += `Salário Base: R$ ${formatarValor(salario)}\n`;
+      texto += `Admissão: ${admissao}\nDemissão: ${demissao}\nTipo de Rescisão: ${rescisao}\n\n`;
+      texto += `Férias Vencidas: ${feriasVencidas === 'sim' ? anos + " ano(s) e " + meses + " mês(es)" : "Não"}\n`;
+      texto += `Valor Férias Vencidas: R$ ${formatarValor(feriasV)}\nAdicional 1/3 Vencidas: R$ ${formatarValor(adicionalV)}\n\n`;
+      texto += `Férias Proporcionais (${temFeriasProporcionais === 'sim' ? mesesUltimoAno : 0} mês(es)): R$ ${formatarValor(feriasP)}\nAdicional 1/3 Proporcionais: R$ ${formatarValor(adicionalP)}\n\n`;
+      texto += `13º Salário: R$ ${formatarValor(decimoTotal)}\nAdicional 1/3 do 13º: R$ ${formatarValor(adicional13)}\n\n`;
+      texto += `Aviso Prévio (${aviso}): R$ ${formatarValor(avisoPrevio)}\nSaldo de Salário (${diasTrabalhados} dias): R$ ${formatarValor(saldoSalario)}\n\n`;
+      texto += `FGTS: R$ ${formatarValor(fgts)}\nMulta de 40% FGTS: R$ ${formatarValor(multaFgts)}\n\n`;
+      texto += `TOTAL ESTIMADO A RECEBER: R$ ${formatarValor(total)}`;
+
+      document.getElementById("resultado").value = texto;
+    }
+
+    function gerarPDF() {
+      const resultadoText = document.getElementById("resultado").value.trim();
+      if (!resultadoText) {
+        alert("Por favor, gere o resumo antes de exportar.");
+        return;
+      }
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text("Resultado da Calculadora Trabalhista:", 10, 10);
+      doc.text(doc.splitTextToSize(resultadoText, 180), 10, 20);
+      doc.save("verbas-trabalhistas.pdf");
+    }
+
+    function resetarFormulario() {
+      document.getElementById("formulario").reset();
+      document.getElementById("resultado").value = "";
+      document.getElementById("feriasDetalhes").classList.add("hidden");
+      document.getElementById("decimoDetalhes").classList.add("hidden");
+      document.getElementById("fgtsRecebido").disabled = false;
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registrado:', reg))
+          .catch(err => console.error('Erro no SW:', err));
+      });
+    }
+  </script>
+</body>
+</html>
